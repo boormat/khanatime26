@@ -1,8 +1,8 @@
 # Khanacross — Stopwatch Mode Data Entry
 
-> How an official records timing data using the phone app in manual stopwatch
-> mode. Designed for the most common khanacross scenario: one official per
-> stopwatch, start and finish at the same or nearby location.
+> Start and finish are **separate event records**. Elapsed time is computed
+> when both exist. Officials only record what they observe at their location.
+> One phone can operate Both mode (start + finish buttons → two records).
 
 ---
 
@@ -10,544 +10,301 @@
 
 A khanacross test is typically:
 - Under 1 km, times 30–90 seconds
-- Start and finish at the same spot (one official with a stopwatch) or at
-  two nearby spots (two officials, each with a stopwatch)
-- 2–4 officials timing each run for redundancy
-- The official watches the car, starts the stopwatch at the start signal,
-  stops it at the finish
-- Times are written on a results sheet and walked/radioed to the timekeeper
+- Start and finish at the same spot or separate garages
+- 2+ officials for redundancy (regs: average ≥2 stopwatches when manual)
+- Penalties observed at the relevant end (jump start at start; flags/NFG at finish)
 
-The app replaces the paper results sheet. The official taps to start, taps
-to stop, taps to record penalties, and the data syncs to the timekeeper
-over WiFi or BLE.
+The app replaces paper sheets. Officials tap start or finish; data syncs to
+the timekeeper over WiFi (and later BLE).
 
 ---
 
-## The Official's Workflow
+## Position Modes
 
-### Before the event
-1. Open the app (PWA in browser, or native app)
-2. Scan QR code to join event WiFi and load event configuration
-3. Select role: **Stopwatch Official**
-4. Select test number (e.g., "Test 1")
-5. Screen shows ready state, waiting for the next car
+On joining a test, the official chooses:
 
-### During a run
-1. **Car arrives at start line.** Official confirms car number verbally
-   or reads it off the car
-2. **Tap "Ready"** — app enters armed state, clock running in background
-3. **Car starts.** Official taps "Start" — timestamp recorded as T₀
-4. **Car finishes.** Official taps "Stop" — timestamp recorded as T₁
-5. **Elapsed time = T₁ − T₀** displayed immediately on screen
-6. Official notes any penalties observed (optional — can be done after)
+| Mode | Creates | Typical use |
+|---|---|---|
+| **Start** | `start_events` only | Separate start garage; or shared stopwatch “clicker” |
+| **Finish** | `finish_events` only | Separate finish garage; or shared stopwatch “stopper” |
+| **Both** | start then finish on one phone | Co-located single official; still two DB records |
 
-### After a run
-7. **Penalty entry** (if applicable):
-   - Tap penalty button to add: wrong direction, missed stop, marker hit,
-     reversed in garage, etc.
-   - For marker hits: tap to increment count (1F, 2F, 3F...)
-8. **Tap "Submit"** — entry saved locally and queued for sync to timekeeper
-9. **Screen resets** to ready state for the next car
-
-### Car number entry
-- At any point before or during the run, the official enters the car number
-- Large number pad for quick entry (car numbers are typically 1–999)
-- Recent car numbers shown as quick-select buttons (most events run cars
-  in a fixed order)
+**Shared stopwatch (two officials, same spot):** Official A on Start mode,
+Official B on Finish mode. A gets a clean start click; B gets a clean stop
+click. Pairing key links them into one elapsed time.
 
 ---
 
-## Screen Layout
+## Pairing Key
 
-### Ready State
+```
+(event_id, test_number, car_number, run_number)
+```
+
+- **Start official** assigns `run_number` (auto-increment per car per test)
+- **Finish official** selects the matching pending start (or types car / picks list)
+- Elapsed = finish.timestamp − start.timestamp
+- Multiple start or finish observations for the same key are averaged by the timekeeper
+
+---
+
+## Start Official Workflow
+
+1. Select test, position **Start**
+2. Enter car number (pad or quick-select)
+3. Run number shown (auto next for that car)
+4. Tap **▶ START** → `start_event` with status `clean`
+5. Or **DNS** → no usable start time, status DNS
+6. Or **Jump Start** → timestamp + status `jump_start` (+5s flat on that run)
+7. Screen ready for next car
+
+### Start screen
 
 ```
 ┌─────────────────────────────────┐
-│  Test 1          Official: Mat  │
+│  Test 1 — START    Official: Mat│
 │                                 │
-│         ┌───────────────┐       │
-│         │   Car #___    │       │
-│         │               │       │
-│         │  [number pad] │       │
-│         └───────────────┘       │
+│         Car #23                │
+│         Run 1                  │
 │                                 │
 │    ┌────────────────────────┐   │
 │    │     ▶ START            │   │
 │    └────────────────────────┘   │
+│    [DNS]  [Jump Start]          │
 │                                 │
-│  Last: Car 17 — 01:12.34 ✓    │
+│  Last: Car 17 R1 started ✓    │
 └─────────────────────────────────┘
 ```
 
-- Large car number entry
-- Start button is big and tappable without looking
-- Shows last recorded time for confirmation
+### Start penalties
 
-### Timing State (running)
+| Action | Status | Time effect |
+|---|---|---|
+| Clean start | `clean` | — |
+| Failed to present / not start in 1 min | `DNS` | Slowest + 10s (at test resolve) |
+| Jump start | `jump_start` | **+5s** on this run |
+
+---
+
+## Finish Official Workflow
+
+1. Select test, position **Finish**
+2. See **live feed** of cars started but not finished (start time, age, start penalties)
+3. Select car: tap pending row, **or** type car number, **or** pick from entrant list
+4. Tap **⏹ FINISH** — **always allowed**, even with no car selected (orphan finish; timekeeper assigns car later)
+5. Post-finish summary: start info (if paired) + elapsed + finish penalties
+6. Set **flag count** and other finish penalties
+7. **Submit** → `finish_event`
+
+### Finish screen — waiting
 
 ```
 ┌─────────────────────────────────┐
-│  Test 1          Official: Mat  │
+│  Test 1 — FINISH  Official: Sar │
 │                                 │
-│         Car #23                │
+│  ── Waiting ────────────────── │
+│  Car 17 R1  11:05:23  12s ago  │
+│  Car 7  R1  11:05:45   8s ago  │
 │                                 │
-│      ┌─────────────────┐       │
-│      │   00:23.47      │       │
-│      │   ▶▶ RUNNING    │       │
-│      └─────────────────┘       │
+│  Selected: Car 17               │
+│  [type #] [entrant list]        │
 │                                 │
 │    ┌────────────────────────┐   │
-│    │     ⏹ STOP            │   │
+│    │     ⏹ FINISH           │   │
 │    └────────────────────────┘   │
+│  (works without selection)      │
 │                                 │
-│  Start: 10:23:45.12            │
+│  Last: Car 23 01:12.34 ✓      │
 └─────────────────────────────────┘
 ```
 
-- Live elapsed time counting up
-- Large stop button
-- Shows start timestamp for reference
-
-### Stopped State (time recorded)
+### Finish screen — after stop (summary)
 
 ```
 ┌─────────────────────────────────┐
-│  Test 1          Official: Mat  │
+│  Car #17 R1 Williams            │
 │                                 │
-│         Car #23                │
+│  Start:  11:05:23.456 (Mat)    │
+│  Finish: 11:06:35.796 (Sarah)  │
+│  Elapsed: 01:12.34             │
 │                                 │
-│      ┌─────────────────┐       │
-│      │   01:12.34      │       │
-│      │   ⏹ STOPPED     │       │
-│      └─────────────────┘       │
+│  Start: Clean ✓                │
+│  Flags: [−] 1 [+]  (+5s each)  │
+│  [NFG] [Wrong Dir] [Missed]    │
+│  [Reversed] [DNF] [Order] [DSQ]│
 │                                 │
-│  Penalties:                     │
-│  [+ Marker] [+ Wrong Dir]      │
-│  [+ Missed Stop] [+ Reverse]   │
-│  [NFG]  [DSQ]                   │
-│                                 │
-│  Current: 0 penalties          │
-│                                 │
-│    ┌────────────────────────┐   │
-│    │     ✓ SUBMIT          │   │
-│    └────────────────────────┘   │
-│                                 │
-│  [✗ Discard]                    │
+│  Net: 01:17.34  (1F)           │
+│  [✓ SUBMIT]  [Discard]         │
 └─────────────────────────────────┘
 ```
 
-- Time locked — cannot be edited (immutable once stopped)
-- Penalty buttons are clear and unambiguous
-- Marker hit counter increments on tap: 1F → 2F → 3F
-- Submit saves and syncs. Discard resets to ready state.
+### Finish penalties
+
+| Control | Meaning | Time effect |
+|---|---|---|
+| **Flags** (marker_hits) | Number of flags/markers hit | **+5.00s per flag** |
+| **NFG** | Not Finished Garage — any part of car outside finish garage | **+5.00s plus flags** |
+| Wrong direction | Incorrectly completed test | Slowest + 5 |
+| Missed mid-course stop | Failed to stop in mid-course garage | Slowest + 5 |
+| Reversed | Reversed after exceeding garage limits | Slowest + 5 |
+| DNF | Did not finish | Slowest + 5 |
+| Wrong order | Running out of order | Slowest + 10 |
+| DSQ | Speed / other disqualification | DSQ |
+
+**NFG** = regs abbreviation for finish outside garage (Rule 12.1).  
+Flags and NFG both apply when both are set (e.g. NFG + 2 flags = +5 + 10 = +15s).
+
+Slowest-based penalties are stored as status flags and resolved when the
+test is complete (slowest clean time known).
+
+---
+
+## Both Mode (single official, co-located)
+
+```
+┌─────────────────────────────────┐
+│  Test 1 — BOTH     Official: Mat│
+│                                 │
+│         Car #23  Run 1         │
+│                                 │
+│  ┌──────────┐  ┌──────────┐    │
+│  │ ▶ START  │  │ ⏹ FINISH │    │
+│  └──────────┘  └──────────┘    │
+│                                 │
+│  Start: 10:23:45.12 ✓          │
+│  Elapsed: 00:23.47 running…    │
+└─────────────────────────────────┘
+```
+
+1. Enter car → ▶ START → start_event  
+2. ⏹ FINISH → finish_event + penalty UI  
+3. Same pairing key; same official_id on both records  
 
 ---
 
 ## Multi-Stopwatch Averaging
 
-The regulations require at least 2 stopwatches per run, averaged. The app
-handles this in two ways:
+Regs require ≥2 manual stopwatches, averaged.
 
-### Option A — One app per official (preferred)
+| Scenario | How |
+|---|---|
+| Two full stopwatches (co-located) | Two phones in Both mode, or two Start+Finish pairs → timekeeper averages start times and finish times separately |
+| Shared start/finish clickers | One Start phone + one Finish phone → one pair, no average needed |
+| Multiple finish observers | Multiple finish_events same key → average finish timestamps |
 
-Each official runs the app independently on their own phone. Each records
-their own time. The timekeeper's admin view shows all submitted times per
-run and auto-calculates the average.
-
-```
-Timekeeper's view — Test 1, Car 23:
-
-  Official Mat:    01:12.34
-  Official Sarah:  01:12.56
-  Official Dave:   01:12.28
-  ─────────────────────────
-  Average:         01:12.39
-  Penalties:       None
-  Net time:        01:12.39
-```
-
-The timekeeper can override any individual time if a stopwatch malfunction
-is suspected.
-
-### Option B — One official records multiple stopwatches
-
-If fewer than 2 phones are available, one official can start/stop two
-stopwatch timers on the same phone. The UI adds a second timer button:
-
-```
-┌─────────────────────────────────┐
-│         Car #23                │
-│                                 │
-│   SW 1:  00:00.00    [▶ START] │
-│   SW 2:  00:00.00    [▶ START] │
-│                                 │
-└─────────────────────────────────┘
-```
-
-Both timers run independently. Average is computed locally on submit.
-
-### Option C — Redundant recording, single official
-
-One official records their time. A second official independently records
-the same run. Both submit. The timekeeper reconciles.
-
-This is the most common real-world scenario at grassroots events — often
-only 1–2 officials are timing, and they may not both have phones.
+Timekeeper can discard outlier start or finish submissions independently.
 
 ---
 
-## Penalty Types and Input
+## Test Overview (runs per test)
 
-| Penalty | Button | Input | Calculation |
-|---|---|---|---|
-| Marker hit | `[+ Marker]` | Tap to increment count | +5.00 per marker |
-| Wrong direction | `[Wrong Dir]` | Toggle on/off | Slowest + 5.00 |
-| Missed mid-course stop | `[Missed Stop]` | Toggle on/off | Slowest + 5.00 |
-| Reversed in garage | `[Reverse]` | Toggle on/off | Slowest + 5.00 |
-| Failed to finish | `[DNF]` | Toggle on/off | Slowest + 5.00 |
-| Not finished correctly | `[NFG]` | Toggle on/off | +5.00 + markers |
-| Out of order | `[Out of Order]` | Toggle on/off | Slowest + 10.00 |
-| Failed to present | `[DNS]` | Toggle on/off | Slowest + 10.00 |
-| Failed to start in time | `[DNS]` | Toggle on/off | Slowest + 10.00 |
-| Speed limit violation | `[DSQ]` | Toggle on/off | Disqualification |
+Shows pairing status per car:
 
-**Note:** "Slowest time" penalties (WD, DNF, DNS, IM) cannot be computed
-until all cars have run the test, because the slowest clean time is not
-known until the test is complete. These penalties are stored as a flag
-and resolved by the timekeeper when the test finishes.
+```
+Car  Driver     Start   Finish   Net     Status
+ 7   Smith      ✓ R1    ✓ R1    45.23   ✓ Done
+12   Jones      ✓ R1    —       —       ○ In progress
+17   Williams   ✓ R1    ✓ R1    46.89+5 ⚠ 1F
+23   Brown      —       —       —       ○ Open
+31   Davis      DNS     —       S+10    ✗ DNS
+```
+
+Best X of Y still applies to completed paired runs (see below).
 
 ---
 
-## Data Submission Format
+## Best X of Y
 
-Each stopwatch submission is a structured entry:
+Event config: `best_x_of_y` (standard khanacross = 1 of 1).
+
+For each car/test:
+1. List completed run_results (paired start+finish)
+2. Exclude DNS/DSQ from counting pool as appropriate
+3. Sort by net_ms; best `x` count toward aggregate
+4. Status: Done / Short / Open / None (same as before)
+
+---
+
+## Categories (not classes)
+
+- Drivers have **zero or more categories** (Outright, Junior, Female, Buggy, …)
+- Outright auto-created; default membership on entry
+- Results published Overall + per category
+- Driver with no categories: timed, Overall only
+
+Entry management still supports late entry, withdraw, scratch (unchanged
+behaviour; assign categories on add/edit).
+
+---
+
+## Data Submission Formats
+
+### Start event
 
 ```json
 {
-  "type": "stopwatch",
+  "type": "start_event",
   "event_id": "khanacross_2025_001",
   "test": 1,
   "car": 23,
   "run": 1,
   "official": "did:key:z6Mk...",
-  "timestamp_start": "2025-09-14T10:23:45.12Z",
-  "timestamp_stop": "2025-09-14T10:24:57.46Z",
-  "elapsed_ms": 72340,
-  "penalties": [
-    { "type": "marker_hit", "count": 1 }
-  ],
-  "penalty_ms": 5000,
-  "net_ms": 77340,
+  "timestamp": "2025-09-14T10:23:45.12Z",
   "status": "clean",
   "signature": "base64..."
 }
 ```
 
-This can be sent as a Matrix message to the `#timing` room, or stored
-locally and synced via BLE.
-
----
-
-## Best X of Y — Runs Per Test
-
-Events define how many runs each car gets per test, and how many of those
-count toward the result. This is configured per event in supplementary
-regulations.
-
-### Configuration
-
-```
-Event config:
-  best_x_of_y: { x: 2, y: 3 }
-  // Each car gets 3 attempts per test, best 2 count toward the result
-```
-
-| Setting | Meaning | Example |
-|---|---|---|
-| `y` (total allowed) | Maximum runs a car can attempt per test | 3 |
-| `x` (counting) | Number of best runs that count toward the result | 2 |
-| `x = y` | Every run counts (no discard) — standard khanacross | e.g. 1 of 1 |
-| `x < y` | Worst run(s) discarded | 2 of 3, 3 of 5 |
-
-**Standard khanacross** (per MA regulations) is effectively 1 of 1 — every
-run counts, no discards. The `best_x_of_y` model is a superset that handles
-both standard and multi-attempt events.
-
-### Runs Per Test View
-
-The official can switch from the stopwatch screen to the **Test Overview**
-screen at any time. This shows the status of every car for the current test.
-
-```
-┌─────────────────────────────────────────┐
-│  Test 1 — Best 2 of 3          ⏱ 14:22 │
-│  ═══════════════════════════════════════ │
-│                                         │
-│  Car  Driver        R1      R2    R3   │
-│  ─────────────────────────────────────  │
-│   7   Smith         45.23   44.89  ·   │  ✓ Done (2/2 counting)
-│  12   Jones         47.01   DNF    ·   │  ⚠ 1 counting (needs 2)
-│  17   Williams      46.55   46.12  ·   │  ✓ Done (2/2 counting)
-│  23   Brown         48.34    —     —   │  ○ 1 run only (2 remaining)
-│  31   Davis          —      DNS    —   │  ✗ No valid runs
-│  45   Taylor        46.78   45.90  45.33│  ✓ Done (2 of 3, best shown)
-│  58   Wilson         —      —     —    │  ○ Not started (3 remaining)
-│                                         │
-│  ── Legend ──────────────────────────── │
-│  ✓ Done   — enough counting runs       │
-│  ⚠ Short — fewer than x counting runs  │
-│  ○ Open   — has remaining attempts     │
-│  ✗ None   — no valid runs recorded     │
-│  ·         — not yet run               │
-│  —         — exhausted / did not run   │
-│  DNF/DNS   — penalty recorded          │
-│                                         │
-│  [◀ Back to Stopwatch]                  │
-└─────────────────────────────────────────┘
-```
-
-### Status Definitions Per Car
-
-| Status | Meaning | Visual |
-|---|---|---|
-| **Done** | Has `x` or more counting runs completed | Green ✓ |
-| **Short** | Has fewer than `x` counting runs, may still attempt more | Amber ⚠ |
-| **Open** | Has remaining attempts available (`runs_done < y`) | Blue ○ |
-| **None** | Has attempted runs but none are counting (all penalties/DNF) | Red ✗ |
-| **Finished** | Has attempted `y` runs, fewer than `x` counting — cannot improve | Gray — |
-
-### How Counting Runs Are Determined
-
-For each car on each test, the system:
-
-1. Lists all runs submitted for that car on that test
-2. Excludes runs with status DNF, DNS, DSQ (these never count)
-3. Excludes runs with "slowest + N" penalties only if the penalty makes the
-   net time worse than all clean runs — **but per regulations, penalty runs
-   still count as a time** (they're just slow)
-4. Sorts remaining runs by net time (ascending)
-5. The best `x` runs are the counting runs
-6. Remaining runs are discarded from the aggregate
-
-**Example — Best 2 of 3:**
-
-```
-Car 23, Test 1:
-  Run 1:  48.34s (clean)          → counts ✓
-  Run 2:  53.12s (2 markers)      → discarded (3rd best)
-  Run 3:  47.89s (clean)          → counts ✓
-
-  Test time for Car 23 = 48.34 + 47.89 = 96.23s (best 2 of 3)
-```
-
-### Highlighting for Officials
-
-The runs view uses colour and icons to help the official quickly assess
-who still needs to run:
-
-- **Row highlighted green** — car has completed enough counting runs,
-  no more needed (but can still run if `y` not reached)
-- **Row highlighted amber** — car has runs but not enough counting yet
-- **Row highlighted red** — car has no valid runs, high priority to get them
-  to the start line
-- **Row dimmed** — car has exhausted all attempts or is DNS/withdrawn
-- **Row normal** — car has attempts remaining and is progressing normally
-
-The official can sort by status to see who is urgent (red/amber first)
-or by car number for the running order.
-
----
-
-## Competitor List and Entry Management
-
-### Event Entry List
-
-Before the event, the timekeeper (or event organiser) loads the entry list.
-This can come from:
-
-1. **Manual entry** — type in car numbers, driver names, classes
-2. **CSV/JSON import** — from event management software or spreadsheet
-3. **MSNZ POSSUM export** — if integrated (future)
-4. **QR code at sign-on** — competitor scans QR, enters details, data
-   syncs to the event database
-
-The entry list defines who is expected at the event and what car/class
-they are in.
-
-### Entry List Structure
+### Finish event
 
 ```json
 {
-  "entries": [
-    {
-      "car": 7,
-      "driver": "Jane Smith",
-      "class": "A",
-      "licence": "Speed",
-      "passenger": null,
-      "status": "active",
-      "registered_at": "2025-09-14T08:00:00Z"
-    },
-    {
-      "car": 12,
-      "driver": "Bob Jones",
-      "class": "B",
-      "licence": "Speed",
-      "passenger": "Tom Jones (instructor)",
-      "status": "active",
-      "registered_at": "2025-09-14T08:15:00Z"
-    }
-  ]
+  "type": "finish_event",
+  "event_id": "khanacross_2025_001",
+  "test": 1,
+  "car": 23,
+  "run": 1,
+  "official": "did:key:z6Mk...",
+  "timestamp": "2025-09-14T10:24:57.46Z",
+  "marker_hits": 1,
+  "status": "clean",
+  "signature": "base64..."
 }
 ```
 
-### Status Values
+Orphan finish (no car selected yet):
 
-| Status | Meaning | Effect on runs view |
-|---|---|---|
-| **active** | Competitor is entered and expected | Normal display, counts toward expected runs |
-| **late_entry** | Entered after event started, joining mid-competition | Normal display, flagged as late entry |
-| **withdrawn** | Withdrew during the event | Row dimmed, no longer expected at start line |
-| **dns** | Did not start the event (no runs attempted) | Gray, noted in results |
-| **scratched** | Removed from a specific test (e.g. car failure) | Gray for that test only |
-
-### Late Entries
-
-A competitor may arrive after the event has started. The official adds them
-to the entry list:
-
-```
-┌─────────────────────────────────────────┐
-│  Add Entry                              │
-│                                         │
-│  Car #:     [  42        ]              │
-│  Driver:    [  Fred New   ]              │
-│  Class:     [  B          ]              │
-│  Passenger: [  None       ]              │
-│  Status:    ● Active  ○ Late Entry      │
-│                                         │
-│  Join at test: [ 3  ] of 10             │
-│                                         │
-│    [ Add to Entry List ]                │
-└─────────────────────────────────────────┘
-```
-
-The `join_at_test` field tells the system that Car 42 was not expected for
-Tests 1–2. In the runs view for Tests 1–2, Car 42 does not appear. From
-Test 3 onward, Car 42 appears as normal.
-
-### Withdrawals
-
-A competitor may withdraw mid-event (mechanical failure, personal reason).
-The official updates their status:
-
-```
-┌─────────────────────────────────────────┐
-│  Car 23 — Bob Brown                     │
-│                                         │
-│  Status:                                │
-│  ● Active                               │
-│  ○ Withdrawn (after Test 4)            │
-│  ○ Scratched (Test 7 only)             │
-│                                         │
-│  Runs completed: 3 of 5 tests          │
-│  Tests remaining: 5, 6, 7, 8, 9, 10   │
-│                                         │
-│  [ Update Status ]                      │
-└─────────────────────────────────────────┘
-```
-
-When a car is withdrawn:
-- They are removed from the expected start order for remaining tests
-- In the runs view, their row is dimmed with a "W" indicator
-- Their completed tests still count toward the result (aggregate time
-  stands for tests already run)
-- For remaining tests, they show as DNS automatically
-- The timekeeper can override if the car re-enters
-
-When a car is scratched from a specific test:
-- They are removed from the start order for that test only
-- They remain active for other tests
-- The scratched test shows as DNS in their row
-
-### How Withdrawals Affect Results
-
-Per regulations, results are aggregate of elapsed times including penalties.
-If a competitor withdraws after Test 5 of 10:
-- Tests 1–5: times stand as recorded
-- Tests 6–10: DNS penalty applied (slowest + 10 per test)
-- Aggregate = sum of all 10 tests (5 actual + 5 DNS penalties)
-
-The system handles this automatically: withdrawn competitors get DNS
-penalties for remaining tests unless the timekeeper manually overrides
-(e.g., if the event is abandoned and tests are not counted).
-
-### Runs View With Entry Status
-
-```
-┌─────────────────────────────────────────┐
-│  Test 6 — Best 2 of 3          ⏱ 15:40 │
-│  ═══════════════════════════════════════ │
-│                                         │
-│  Car  Driver        R1      R2    R3   │
-│  ─────────────────────────────────────  │
-│   7   Smith         45.23   44.89  ·   │  ✓ Done
-│  12   Jones         47.01   DNF    ·   │  ⚠ Short (1 counting)
-│  17   Williams      46.55   46.12  ·   │  ✓ Done
-│  23   Brown [W]      —      —     —    │  — Withdrawn after T5
-│  31   Davis          —      DNS    —   │  ✗ No valid runs
-│  42   New [LE]       —      —     —    │  ○ Late entry, joined T3
-│  45   Taylor        46.78   45.90  ·   │  ✓ Done
-│  58   Wilson         —      —     —    │  ○ Not started
-│                                         │
-│  7 cars expected  |  6 active           │
-│  1 late entry     |  1 withdrawn        │
-│                                         │
-│  [◀ Back to Stopwatch]                  │
-└─────────────────────────────────────────┘
+```json
+{
+  "type": "finish_event",
+  "car": null,
+  "run": null,
+  "timestamp": "...",
+  "status": "unassigned"
+}
 ```
 
 ---
 
 ## Edge Cases
 
-### Multiple runs per car per test
-The `best_x_of_y` model handles this. The official records all runs. The
-system automatically picks the best `x` and discards the rest. The timekeeper
-can override which runs count.
-
-### Car does not start
-Official taps DNS. No stopwatch time recorded. Penalty is slowest + 10.
-
-### Car starts but does not finish
-Official taps DNF after the car disappears (crash, mechanical failure).
-Penalty is slowest + 5.
-
-### Official misses the start
-If the official is not ready and the car goes, they can:
-- Tap "Late Start" — record the time with a flag for the timekeeper
-- Discard and ask for a re-run (Clerk of Course decision)
-
-### Official misses the finish
-Same as above — tap "Late Stop" or discard.
-
-### Two officials disagree significantly
-The timekeeper can see both times in the admin view. If one is clearly
-wrong (e.g., 10 seconds off), the timekeeper discards it and uses the
-other, or averages the remaining times.
+| Case | Handling |
+|---|---|
+| Car starts, never finishes | Start exists; finish official or timekeeper marks DNF |
+| Finish with no start (comms fail) | Orphan finish or typed car; timekeeper pairs/creates start or uses manual time |
+| Finish before start arrives on finish phone | Select car by number; pair when start syncs |
+| Two starts same car/run | Timekeeper averages or discards one |
+| Official misses start | Late Start flag or re-run (Clerk of Course) |
+| Official misses finish | Late Finish or orphan timestamp |
+| Jump start + flags | +5 jump + 5×flags on net |
 
 ---
 
-## Sync to Timekeeper
+## Sync
 
-Each submission is saved locally first, then synced:
+1. Save locally first  
+2. WiFi → Matrix #timing  
+3. Later: BLE multihop  
+4. Timekeeper live feed shows starts, finishes, and in-progress separately  
 
-1. **WiFi available:** POST to Matrix homeserver immediately
-2. **WiFi available but slow:** Queue locally, batch send every N seconds
-3. **No WiFi:** Save locally, sync via BLE to nearby devices, which forward
-   when they get connectivity
-4. **No WiFi, no BLE:** Data stays on phone until connectivity returns.
-   Official can also verbally relay the time to the timekeeper as backup.
-
-The timekeeper's admin view updates in real time as submissions arrive,
-showing which officials have submitted and which are pending.
+See [KhanacrossBuildPlan.md](KhanacrossBuildPlan.md) for schema and sprints.

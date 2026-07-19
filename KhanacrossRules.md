@@ -195,51 +195,82 @@ and no results are official.
 
 ---
 
-## 5. Classes
+## 5. Classes (regs) vs Categories (app)
 
-Automobile classes are defined in Auto Test Appendix – Group 4K Khanacross
-Technical Regulations (separate document). The Supplementary Regulations
-may include additional classes for Drivers. *(Rule 7.3)*
+Automobile **classes** in the standing regs refer to Group 4K technical
+classes. *(Rule 7.3)* Supplementary Regulations may add driver classes.
 
-Classes are relevant to results: results are typically displayed overall
-and by class.
+**In Khanatime the app uses categories instead of a single class field:**
+- Drivers may be in **zero or more categories** (e.g. Outright, Junior,
+  Female, Buggy)
+- **Outright** is created by default for each event
+- Results are generated **Overall** (all timed drivers) and **per category**
+- A driver with no categories is still timed but only appears in Overall
+  (e.g. car not eligible for any category at the event)
 
 ---
 
-## 6. Data Model Implications
+## 6. App modelling notes (start / finish split)
 
-Based on the rules above, the app needs to track:
+The standing regs define one elapsed time per attempt (start line → finish
+line). The app records **separate start and finish observations** so that:
+
+- Start and finish officials need not be co-located
+- Penalties are owned by the end that observes them
+- Two officials can share a stopwatch (one clicks start, one clicks finish)
+- Multiple observations of the same start or finish can be averaged
+
+| Observation | Official | Penalties owned |
+|---|---|---|
+| Start event | Start line | DNS, jump start (+5s flat — app/supp. regs) |
+| Finish event | Finish line | Flags (+5s each), NFG (+5s + flags), WD, missed stop, reverse, DNF, wrong order, DSQ |
+
+**NFG** = Not Finished Garage (regs table): stop at finish with any part of
+the automobile outside the garage → plus 5 seconds **plus any marker hit**.
+
+**Marker / flag hit** = plus 5 seconds **per** marker (abbreviations 1F, 2F…).
+
+Elapsed time = finish timestamp − start timestamp (after averaging if
+multiple stopwatches). Pairing key: event + test + car + run number.
+
+Full schema: [KhanacrossBuildPlan.md](KhanacrossBuildPlan.md).  
+Official UX: [KhanacrossStopwatch.md](KhanacrossStopwatch.md).
+
+---
+
+## 7. Data Model Implications
 
 ### Per Event
 - Event name, date, organiser
-- List of tests (name/number, course description)
-- Number of scheduled tests (for abandonment check)
-- Supplementary Regulations (any additional rules)
+- List of tests
+- Number of scheduled tests (abandonment check)
+- best_x_of_y
+- Categories (Outright + optional)
 
 ### Per Test
 - Test number/name
-- Course diagram (optional)
-- Start type: same garage (stopwatch) or separate garages (wall clock)
+- Start type: same garage or separate garages
 
 ### Per Car Entry
-- Car number
-- Driver name, licence, class
-- Passenger name (if applicable)
-- Automobile details
+- Car number, driver name, licence, passenger
+- Zero or more category memberships
+- Status: active / late_entry / withdrawn / scratched / dns
 
-### Per Run (one car, one test)
-- Car number
-- Test number
-- Run number (car may have multiple attempts per test)
-- Stopwatch times (minimum 2, from different officials)
-- Elapsed time (averaged from stopwatches, or automatic timing)
-- Penalties observed (type, count)
-- Penalty time (computed from type + count + test results)
-- Net time (elapsed + penalty)
-- Status: clean, WD, DNF, NFG, DSQ, IM, DNS
+### Per Start Event
+- Test, car, run number, official, timestamp
+- Status: clean / DNS / jump_start
+
+### Per Finish Event
+- Test, car, run number, official, timestamp
+- marker_hits (flags)
+- Status: clean / DNF / NFG / wrong_direction / missed_stop / reversed /
+  wrong_order / DSQ
+
+### Per Run Result (computed)
+- Paired start + finish
+- Elapsed, penalty_ms, net_ms
+- Counting flag for best X of Y
 
 ### Per Result
-- Driver aggregate time (sum of net times across all tests)
-- Overall position (ranked by aggregate, lowest first)
-- Class position
+- Aggregate time, overall position, position per category
 - Ties: joint placegetters
