@@ -462,7 +462,7 @@ Categories list with Outright locked; add Junior/Female/Buggy; assign drivers to
 
 ### Competitor — Results
 
-Tabs: **Overall** | **Junior** | **Female** | **Buggy** …  
+Tabs: **Overall** | **Junior** | **Female** | **Buggy** …
 Overall = all timed drivers. Category tabs = members of that category only.
 
 ---
@@ -490,6 +490,11 @@ Overall = all timed drivers. Category tabs = members of that category only.
 - [ ] Test overview (start/finish status per car)
 - [ ] run_pairer + penalty_calculator + best_of_x
 - [ ] Unit tests for pairer, penalties, best X of Y
+
+- Bug: Start car of same number twice. Finish official cannot finish that car. Ignored?
+- Bug: not clear how to fix a data entry, specifically a car number, mistake after start/stop.
+- Bug: car picker at start not present/working.
+
 
 ### Sprint 3 — Timekeeper Admin (Week 5–6)
 

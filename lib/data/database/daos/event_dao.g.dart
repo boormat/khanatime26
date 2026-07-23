@@ -6,4 +6,14 @@ part of 'event_dao.dart';
 mixin _$EventDaoMixin on DatabaseAccessor<AppDatabase> {
   $EventsTable get events => attachedDatabase.events;
   $CategoriesTable get categories => attachedDatabase.categories;
+  EventDaoManager get managers => EventDaoManager(this);
+}
+
+class EventDaoManager {
+  final _$EventDaoMixin _db;
+  EventDaoManager(this._db);
+  $$EventsTableTableManager get events =>
+      $$EventsTableTableManager(_db.attachedDatabase, _db.events);
+  $$CategoriesTableTableManager get categories =>
+      $$CategoriesTableTableManager(_db.attachedDatabase, _db.categories);
 }

@@ -1,9 +1,5 @@
-import 'dart:io';
-
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import 'package:drift_flutter/drift_flutter.dart';
 
 import 'tables/events.dart';
 import 'tables/tests.dart';
@@ -51,10 +47,12 @@ class AppDatabase extends _$AppDatabase {
       );
 }
 
-LazyDatabase _openConnection() {
-  return LazyDatabase(() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dir.path, 'khanatime26.sqlite'));
-    return NativeDatabase.createInBackground(file);
-  });
+DatabaseConnection _openConnection() {
+  return driftDatabase(
+    name: 'khanatime26',
+    web: DriftWebOptions(
+      sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+      driftWorker: Uri.parse('drift_worker.js'),
+    ),
+  );
 }

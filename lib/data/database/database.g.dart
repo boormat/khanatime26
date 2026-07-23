@@ -4071,7 +4071,7 @@ final class $$EventsTableReferences
     _$AppDatabase db,
   ) => MultiTypedResultKey.fromTable(
     db.tests,
-    aliasName: $_aliasNameGenerator(db.events.id, db.tests.eventId),
+    aliasName: 'events__id__tests__event_id',
   );
 
   $$TestsTableProcessedTableManager get testsRefs {
@@ -4090,7 +4090,7 @@ final class $$EventsTableReferences
     _$AppDatabase db,
   ) => MultiTypedResultKey.fromTable(
     db.entries,
-    aliasName: $_aliasNameGenerator(db.events.id, db.entries.eventId),
+    aliasName: 'events__id__entries__event_id',
   );
 
   $$EntriesTableProcessedTableManager get entriesRefs {
@@ -4108,7 +4108,7 @@ final class $$EventsTableReferences
   static MultiTypedResultKey<$StartEventsTable, List<StartEvent>>
   _startEventsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.startEvents,
-    aliasName: $_aliasNameGenerator(db.events.id, db.startEvents.eventId),
+    aliasName: 'events__id__start_events__event_id',
   );
 
   $$StartEventsTableProcessedTableManager get startEventsRefs {
@@ -4126,7 +4126,7 @@ final class $$EventsTableReferences
   static MultiTypedResultKey<$FinishEventsTable, List<FinishEvent>>
   _finishEventsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.finishEvents,
-    aliasName: $_aliasNameGenerator(db.events.id, db.finishEvents.eventId),
+    aliasName: 'events__id__finish_events__event_id',
   );
 
   $$FinishEventsTableProcessedTableManager get finishEventsRefs {
@@ -4144,7 +4144,7 @@ final class $$EventsTableReferences
   static MultiTypedResultKey<$CategoriesTable, List<Category>>
   _categoriesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.categories,
-    aliasName: $_aliasNameGenerator(db.events.id, db.categories.eventId),
+    aliasName: 'events__id__categories__event_id',
   );
 
   $$CategoriesTableProcessedTableManager get categoriesRefs {
@@ -4806,9 +4806,8 @@ final class $$TestsTableReferences
     extends BaseReferences<_$AppDatabase, $TestsTable, Test> {
   $$TestsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $EventsTable _eventIdTable(_$AppDatabase db) => db.events.createAlias(
-    $_aliasNameGenerator(db.tests.eventId, db.events.id),
-  );
+  static $EventsTable _eventIdTable(_$AppDatabase db) =>
+      db.events.createAlias('tests__event_id__events__id');
 
   $$EventsTableProcessedTableManager get eventId {
     final $_column = $_itemColumn<String>('event_id')!;
@@ -5146,9 +5145,8 @@ final class $$EntriesTableReferences
     extends BaseReferences<_$AppDatabase, $EntriesTable, Entry> {
   $$EntriesTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $EventsTable _eventIdTable(_$AppDatabase db) => db.events.createAlias(
-    $_aliasNameGenerator(db.entries.eventId, db.events.id),
-  );
+  static $EventsTable _eventIdTable(_$AppDatabase db) =>
+      db.events.createAlias('entries__event_id__events__id');
 
   $$EventsTableProcessedTableManager get eventId {
     final $_column = $_itemColumn<String>('event_id')!;
@@ -5167,7 +5165,7 @@ final class $$EntriesTableReferences
   static MultiTypedResultKey<$EntryCategoriesTable, List<EntryCategory>>
   _entryCategoriesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.entryCategories,
-    aliasName: $_aliasNameGenerator(db.entries.id, db.entryCategories.entryId),
+    aliasName: 'entries__id__entry_categories__entry_id',
   );
 
   $$EntryCategoriesTableProcessedTableManager get entryCategoriesRefs {
@@ -5661,9 +5659,8 @@ final class $$StartEventsTableReferences
     extends BaseReferences<_$AppDatabase, $StartEventsTable, StartEvent> {
   $$StartEventsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $EventsTable _eventIdTable(_$AppDatabase db) => db.events.createAlias(
-    $_aliasNameGenerator(db.startEvents.eventId, db.events.id),
-  );
+  static $EventsTable _eventIdTable(_$AppDatabase db) =>
+      db.events.createAlias('start_events__event_id__events__id');
 
   $$EventsTableProcessedTableManager get eventId {
     final $_column = $_itemColumn<String>('event_id')!;
@@ -6096,9 +6093,8 @@ final class $$FinishEventsTableReferences
     extends BaseReferences<_$AppDatabase, $FinishEventsTable, FinishEvent> {
   $$FinishEventsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $EventsTable _eventIdTable(_$AppDatabase db) => db.events.createAlias(
-    $_aliasNameGenerator(db.finishEvents.eventId, db.events.id),
-  );
+  static $EventsTable _eventIdTable(_$AppDatabase db) =>
+      db.events.createAlias('finish_events__event_id__events__id');
 
   $$EventsTableProcessedTableManager get eventId {
     final $_column = $_itemColumn<String>('event_id')!;
@@ -6536,9 +6532,8 @@ final class $$CategoriesTableReferences
     extends BaseReferences<_$AppDatabase, $CategoriesTable, Category> {
   $$CategoriesTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $EventsTable _eventIdTable(_$AppDatabase db) => db.events.createAlias(
-    $_aliasNameGenerator(db.categories.eventId, db.events.id),
-  );
+  static $EventsTable _eventIdTable(_$AppDatabase db) =>
+      db.events.createAlias('categories__event_id__events__id');
 
   $$EventsTableProcessedTableManager get eventId {
     final $_column = $_itemColumn<String>('event_id')!;
@@ -6557,10 +6552,7 @@ final class $$CategoriesTableReferences
   static MultiTypedResultKey<$EntryCategoriesTable, List<EntryCategory>>
   _entryCategoriesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.entryCategories,
-    aliasName: $_aliasNameGenerator(
-      db.categories.id,
-      db.entryCategories.categoryId,
-    ),
+    aliasName: 'categories__id__entry_categories__category_id',
   );
 
   $$EntryCategoriesTableProcessedTableManager get entryCategoriesRefs {
@@ -6955,9 +6947,7 @@ final class $$EntryCategoriesTableReferences
   );
 
   static $EntriesTable _entryIdTable(_$AppDatabase db) =>
-      db.entries.createAlias(
-        $_aliasNameGenerator(db.entryCategories.entryId, db.entries.id),
-      );
+      db.entries.createAlias('entry_categories__entry_id__entries__id');
 
   $$EntriesTableProcessedTableManager get entryId {
     final $_column = $_itemColumn<int>('entry_id')!;
@@ -6973,10 +6963,8 @@ final class $$EntryCategoriesTableReferences
     );
   }
 
-  static $CategoriesTable _categoryIdTable(_$AppDatabase db) =>
-      db.categories.createAlias(
-        $_aliasNameGenerator(db.entryCategories.categoryId, db.categories.id),
-      );
+  static $CategoriesTable _categoryIdTable(_$AppDatabase db) => db.categories
+      .createAlias('entry_categories__category_id__categories__id');
 
   $$CategoriesTableProcessedTableManager get categoryId {
     final $_column = $_itemColumn<int>('category_id')!;
