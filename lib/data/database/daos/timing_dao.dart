@@ -31,14 +31,6 @@ class TimingDao extends DatabaseAccessor<AppDatabase> with _$TimingDaoMixin {
 
   /// Pending starts: started but not yet finished for a test.
   Future<List<StartEvent>> pendingStarts(String eventId, int testNumber) {
-    final finishedCarRunPairs = selectOnly(finishEvents).join([
-      innerJoin(
-          startEvents,
-          startEvents.eventId.equalsExp(finishEvents.eventId) &
-              startEvents.testNumber.equalsExp(finishEvents.testNumber) &
-              startEvents.carNumber.equalsExp(finishEvents.carNumber) &
-              startEvents.runNumber.equalsExp(finishEvents.runNumber)),
-    ]);
     // TODO: implement proper subquery for pending starts
     return (select(startEvents)
           ..where((s) =>

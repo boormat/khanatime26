@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:khanatime26/data/database/database.dart';
+import 'package:drift/drift.dart' hide isNotNull;
 import 'package:drift/native.dart';
 
 AppDatabase createTestDb() => AppDatabase.forTesting(NativeDatabase.memory());
@@ -22,7 +23,7 @@ void main() {
           id: 'test_001',
           name: 'Test Event',
           date: DateTime(2026, 7, 19).millisecondsSinceEpoch,
-          scheduledTests: const Value(3),
+          scheduledTests: 3,
           createdAt: DateTime.now().millisecondsSinceEpoch,
         ),
       );
@@ -44,7 +45,7 @@ void main() {
           id: 'e1',
           name: 'Event 1',
           date: 0,
-          scheduledTests: const Value(1),
+          scheduledTests: 1,
           createdAt: 0,
         ),
       );
@@ -53,7 +54,7 @@ void main() {
           id: 'e2',
           name: 'Event 2',
           date: 0,
-          scheduledTests: const Value(2),
+          scheduledTests: 2,
           createdAt: 0,
         ),
       );
@@ -70,7 +71,7 @@ void main() {
           id: 'e1',
           name: 'Event',
           date: 0,
-          scheduledTests: const Value(1),
+          scheduledTests: 1,
           createdAt: 0,
         ),
       );
@@ -129,7 +130,7 @@ void main() {
           id: 'e1',
           name: 'Event',
           date: 0,
-          scheduledTests: const Value(1),
+          scheduledTests: 1,
           createdAt: 0,
         ),
       );
@@ -140,7 +141,7 @@ void main() {
       await db.categoryDao.addCategory('e1', 'Female', sortOrder: 1);
 
       final cats = await db.categoryDao.categoriesForEvent('e1');
-      expect(cats.length, 2);
+      expect(cats.length, 3);
       // Outright created on event + 2 added = 3
     });
 
@@ -160,7 +161,7 @@ void main() {
           id: 'e1',
           name: 'Event',
           date: 0,
-          scheduledTests: const Value(1),
+          scheduledTests: 1,
           createdAt: 0,
         ),
       );
@@ -223,8 +224,8 @@ void main() {
         FinishEventsCompanion.insert(
           eventId: 'e1',
           testNumber: 1,
-          carNumber: 17,
-          runNumber: 1,
+          carNumber: const Value(17),
+          runNumber: const Value(1),
           timestamp: now + 5000,
           createdAt: now,
         ),

@@ -90,7 +90,9 @@ dart run build_runner build --delete-conflicting-outputs
 | `dart run build_runner build --delete-conflicting-outputs` | Generate drift + riverpod code |
 | `flutter analyze` | Lint check |
 | `flutter test` | Run unit tests |
-| `flutter run` | Launch on device/emulator |
+| `flutter run -d chrome` | Launch on Chrome (web) |
+| `flutter run -d web-server --web-port=8080` | Launch web dev server (useful for Codespaces) |
+| `flutter run` | Launch on connected device/emulator |
 
 Run code generation after any table or DAO changes.
 
