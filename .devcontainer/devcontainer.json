@@ -1,0 +1,29 @@
+{
+  "name": "Khanatime26",
+  "image": "ghcr.io/cirruslabs/flutter:3.44.7",
+
+  "postCreateCommand": "flutter pub get && dart run build_runner build --delete-conflicting-outputs",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dart-code.flutter",
+        "dart-code.dart-code"
+      ]
+    }
+  },
+
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": {
+      "label": "Flutter Web",
+      "onAutoForward": "openBrowser"
+    }
+  },
+
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "4gb",
+    "storage": "16gb"
+  }
+}
