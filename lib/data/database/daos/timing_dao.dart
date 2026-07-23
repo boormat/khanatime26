@@ -104,4 +104,79 @@ class TimingDao extends DatabaseAccessor<AppDatabase> with _$TimingDaoMixin {
     final sum = finishes.fold<int>(0, (prev, f) => prev + f.timestamp);
     return (sum / finishes.length).round();
   }
+
+  /// Watch starts that have no matching finish for a test.
+  Stream<List<StartEvent>> watchPendingStarts(
+      String eventId, int testNumber) async* {
+    await for (final starts in watchStartsForTest(eventId, testNumber)) {
+      final finishes = await getFinishesForTest(eventId, testNumber);
+      final finishedKeys = <_Key>{};
+      for (final f in finishes) {
+        if (f.carNumber != null && f.runNumber != null) {
+          finishedKeys.add(_Key(f.carNumber!, f.runNumber!));
+        }
+      }
+      yield starts
+          .where((s) => !finishedKeys.contains(_Key(s.carNumber, s.runNumber)))
+          .toList();
+    }
+  }
+
+  /// Slowest clean elapsed time for a test (for penalty caps).
+  Future<int?> slowestCleanTime(String eventId, int testNumber) async {
+    final starts = await (select(startEvents)
+          ..where((s) =>
+              s.eventId.equals(eventId) &
+              s.testNumber.equals(testNumber) &
+              s.status.equals('clean')))
+        .get();
+    final finishes = await (select(finishEvents)
+          ..where((f) =>
+              f.eventId.equals(eventId) &
+              f.testNumber.equals(testNumber) &
+              f.status.equals('clean')))
+        .get();
+
+    if (starts.isEmpty || finishes.isEmpty) return null;
+
+    // Index finishes by pairing key
+    final finishMap = <_Key, List<FinishEvent>>{};
+    for (final f in finishes) {
+      if (f.carNumber != null && f.runNumber != null) {
+        final key = _Key(f.carNumber!, f.runNumber!);
+        finishMap.putIfAbsent(key, () => []).add(f);
+      }
+    }
+
+    int? slowest;
+    for (final s in starts) {
+      final key = _Key(s.carNumber, s.runNumber);
+      final matchingFinishes = finishMap[key];
+      if (matchingFinishes == null || matchingFinishes.isEmpty) continue;
+
+      final avgFinish = matchingFinishes
+          .map((f) => f.timestamp)
+          .fold<int>(0, (a, b) => a + b) ~/
+          matchingFinishes.length;
+      final elapsed = avgFinish - s.timestamp;
+
+      if (slowest == null || elapsed > slowest) {
+        slowest = elapsed;
+      }
+    }
+
+    return slowest;
+  }
+}
+
+class _Key {
+  final int car;
+  final int run;
+  const _Key(this.car, this.run);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _Key && car == other.car && run == other.run;
+  @override
+  int get hashCode => Object.hash(car, run);
 }

@@ -17,6 +17,11 @@ class PositionSelectScreen extends StatelessWidget {
               'Where are you positioned?',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 12),
+            const Text(
+              'Event: demo  •  Test: 1',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
@@ -42,6 +47,15 @@ class PositionSelectScreen extends StatelessWidget {
                 onPressed: () => context.push('/official/both/demo/1'),
                 icon: const Icon(Icons.timer, size: 32),
                 label: const Text('Both'),
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/official/test-overview/demo/1'),
+                icon: const Icon(Icons.table_chart),
+                label: const Text('Test Overview'),
               ),
             ),
           ],

@@ -31,19 +31,38 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/official/start/:eventId/:testNumber',
-        builder: (context, state) => const StartScreen(),
+        builder: (context, state) {
+          final eventId = state.pathParameters['eventId']!;
+          final testNumber = int.parse(state.pathParameters['testNumber']!);
+          return StartScreen(eventId: eventId, testNumber: testNumber);
+        },
       ),
       GoRoute(
         path: '/official/finish/:eventId/:testNumber',
-        builder: (context, state) => const FinishScreen(),
+        builder: (context, state) {
+          final eventId = state.pathParameters['eventId']!;
+          final testNumber = int.parse(state.pathParameters['testNumber']!);
+          return FinishScreen(eventId: eventId, testNumber: testNumber);
+        },
       ),
       GoRoute(
         path: '/official/both/:eventId/:testNumber',
-        builder: (context, state) => const BothScreen(),
+        builder: (context, state) {
+          final eventId = state.pathParameters['eventId']!;
+          final testNumber = int.parse(state.pathParameters['testNumber']!);
+          return BothScreen(eventId: eventId, testNumber: testNumber);
+        },
       ),
       GoRoute(
         path: '/official/test-overview/:eventId/:testNumber',
-        builder: (context, state) => const TestOverviewScreen(),
+        builder: (context, state) {
+          final eventId = state.pathParameters['eventId']!;
+          final testNumber = int.parse(state.pathParameters['testNumber']!);
+          return TestOverviewScreen(
+            eventId: eventId,
+            testNumber: testNumber,
+          );
+        },
       ),
       GoRoute(
         path: '/timekeeper/setup',
