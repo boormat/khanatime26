@@ -144,10 +144,12 @@ lib/
 
 | Doc | Contents |
 |-----|----------|
-| [PLAN.md](PLAN.md) | Architecture, transport, crypto, phases |
-| [KhanacrossBuildPlan.md](KhanacrossBuildPlan.md) | Schema, sprints, UI wireframes |
-| [KhanacrossStopwatch.md](KhanacrossStopwatch.md) | Official timing UX detail |
-| [KhanacrossRules.md](KhanacrossRules.md) | Motorsport Australia regulations |
-| [Matrix.md](Matrix.md) | Matrix/Element comms layer |
-| [BluetoothDesign.md](BluetoothDesign.md) | BLE multihop design |
-| [BertyPoc.md](BertyPoc.md) | Berty P2P proof of concept |
+| [PLAN.md](PLAN.md) | Build plan — schema, sprints, UI wireframes, business logic |
+| [docs/KhanacrossRules.md](docs/KhanacrossRules.md) | Motorsport Australia regulations |
+| [docs/KhanacrossStopwatch.md](docs/KhanacrossStopwatch.md) | Official timing UX detail |
+| [docs/research/Architecture.md](docs/research/Architecture.md) | Project goals, tiers, data streams, roles |
+| [docs/research/Cryptography.md](docs/research/Cryptography.md) | Ed25519 keys, signing, trust model |
+| [docs/research/StoreAndForward.md](docs/research/StoreAndForward.md) | Mesh candidates, P2P tech matrix |
+| [docs/research/Matrix.md](docs/research/Matrix.md) | Matrix/Element evaluation |
+| [docs/research/Bluetooth.md](docs/research/Bluetooth.md) | BLE transport comparison |
+| [docs/research/Berty.md](docs/research/Berty.md) | Berty/Wesh evaluation |

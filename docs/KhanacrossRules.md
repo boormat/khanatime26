@@ -233,7 +233,7 @@ the automobile outside the garage → plus 5 seconds **plus any marker hit**.
 Elapsed time = finish timestamp − start timestamp (after averaging if
 multiple stopwatches). Pairing key: event + test + car + run number.
 
-Full schema: [KhanacrossBuildPlan.md](KhanacrossBuildPlan.md).  
+Full schema: [PLAN.md](../PLAN.md).  
 Official UX: [KhanacrossStopwatch.md](KhanacrossStopwatch.md).
 
 ---

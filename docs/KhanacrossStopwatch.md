@@ -307,4 +307,4 @@ Orphan finish (no car selected yet):
 3. Later: BLE multihop  
 4. Timekeeper live feed shows starts, finishes, and in-progress separately  
 
-See [KhanacrossBuildPlan.md](KhanacrossBuildPlan.md) for schema and sprints.
+See [PLAN.md](../PLAN.md) for schema and sprints.

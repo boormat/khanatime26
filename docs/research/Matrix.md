@@ -384,5 +384,5 @@ gaps where WiFi cannot reach.
 - [Element](https://element.io/)
 - [Continuwuity homeserver](https://gitlab.com/continuwuity/continuwuity)
 - [Maubot](https://mau.bot/)
-- [PLAN.md](PLAN.md) — full project planning document
-- [BertyPoc.md](BertyPoc.md) — Berty P2P proof of concept
+- [PLAN.md](../../PLAN.md) — full project planning document
+- [Berty.md](Berty.md) — Berty P2P proof of concept
